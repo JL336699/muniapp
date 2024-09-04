@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muni Rotation Strategy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+        }
+        h1 {
+            color: #1E90FF;
+            text-align: center;
+        }
+        h2 {
+            color: #4682B4;
+        }
+        .chart {
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Muni Rotation Strategy</h1>
+    <h2>Cumulative Returns of Long Strategies</h2>
+    <div class="chart">
+        {% for plot_path in plot_paths %}
+            <img src="{{ plot_path }}" alt="Cumulative Returns">
+        {% endfor %}
+    </div>
+    <h2>Top 10 Long and Short Positions for Each Strategy</h2>
+    {% for strategy, positions in top_positions_summary.items() %}
+        <h3>{{ strategy }}</h3>
+        <h4>Top Longs</h4>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr>
+                <th>Position</th>
+                <th>Average Position Size</th>
+            </tr>
+            {% for index, value in positions['Top Longs'].items() %}
+                <tr>
+                    <td>{{ index }}</td>
+                    <td>{{ value }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <h4>Top Shorts</h4>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr>
+                <th>Position</th>
+                <th>Average Position Size</th>
+            </tr>
+            {% for index, value in positions['Top Shorts'].items() %}
+                <tr>
+                    <td>{{ index }}</td>
+                    <td>{{ value }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <hr>
+    {% endfor %}
+</body>
+</html>
