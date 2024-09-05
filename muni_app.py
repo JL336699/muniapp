@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import os
+
+# Correct file paths
+data_path = r"C:\Users\joseph.lapsley\muni_app\static\MuniData.xlsx"
 
 # Function to load data with error handling
 @st.cache_data
 def load_data():
-    data_path = r"C:\Users\joseph.lapsley\muni_app\static\MuniData.xlsx"
-    
     try:
         # Try to load data
         data = pd.read_excel(data_path, sheet_name='spreads', header=0, index_col=0)
