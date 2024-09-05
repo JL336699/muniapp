@@ -1,0 +1,7 @@
+[http]
+	sslVerify = false
+[user]
+	email = joseph.lapsley@abrdn.com
+	name = JL336699
+[credential "helperselector"]
+	selected = <no helper>
