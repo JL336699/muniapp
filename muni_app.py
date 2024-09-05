@@ -3,34 +3,46 @@ import pandas as pd
 import numpy as np
 import os
 
-# Load data
+# Function to load data with error handling
 @st.cache_data
 def load_data():
-    # Construct the path to the Excel file relative to the script's location
-    data_path = os.path.join(os.path.dirname(__file__), 'static', 'MuniData.xlsx')
+    data_path = r"C:\Users\joseph.lapsley\muni_app\static\MuniData.xlsx"
     
-
-
-    if os.path.exists(data_path):
-        try:
-            data = pd.read_excel(data_path, sheet_name='spreads', header=0, index_col=0)
-            returns = pd.read_excel(data_path, sheet_name='totalreturns', header=0, index_col=0)
-            data.index = pd.to_datetime(data.index)
-            return data, returns
-        except Exception as e:
-            st.error(f"Error loading data: {e}")
-            return None, None
-    else:
-        st.error("File not found at specified path.")
+    try:
+        # Try to load data
+        data = pd.read_excel(data_path, sheet_name='spreads', header=0, index_col=0)
+        returns = pd.read_excel(data_path, sheet_name='totalreturns', header=0, index_col=0)
+        data.index = pd.to_datetime(data.index)
+        return data, returns
+    except ImportError as e:
+        st.error(f"ImportError: {e}. Please install the required dependencies, e.g., openpyxl.")
+        return None, None
+    except FileNotFoundError as e:
+        st.error(f"FileNotFoundError: {e}. Please check the file path.")
+        return None, None
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
         return None, None
 
-# Compute the strategies
-def compute_strategies(data, returns):
-    if data is None or returns is None:
-        return None, None, {}
+data, returns = load_data()
 
-    spreads = data.to_numpy()
-    
+# Stop the app if data is not loaded
+if data is None or returns is None:
+    st.stop()
+
+# Convert data to numpy array
+spreads = data.to_numpy()
+
+# Parameters
+lb = 252
+rebal = [1, 2, 3, 4, 5, 6, 9, 12]
+nb_constituents = 5
+
+# Streamlit app title
+st.title('Muni Rotation Strategy')
+
+# Compute the strategies
+def compute_strategies():
     ts_long = np.zeros((data.shape[0], len(rebal)))
     ts_short = np.zeros((data.shape[0], len(rebal)))
     top_positions_summary = {}
@@ -94,35 +106,23 @@ def get_top_10_positions(rebal_signal_long, rebal_signal_short, nb_constituents=
     
     return top_longs, top_shorts
 
-# Parameters
-lb = 252
-rebal = [1, 2, 3, 4, 5, 6, 9, 12]
-nb_constituents = 5
-
-# Streamlit app title
-st.title('Muni Rotation Strategy')
-
 # Run the computation
-data, returns = load_data()
-ts_long, ts_short, top_positions_summary = compute_strategies(data, returns)
+ts_long, ts_short, top_positions_summary = compute_strategies()
 
 # Visualize results
-if data is not None and returns is not None:
-    st.subheader('Cumulative Returns of Long Strategies')
-    for i in range(len(rebal)):
-        st.line_chart(ts_long[:, i])
+st.subheader('Cumulative Returns of Long Strategies')
+for i in range(len(rebal)):
+    st.line_chart(ts_long[:, i])
 
-    st.subheader('Cumulative Returns of Short Strategies')
-    for i in range(len(rebal)):
-        st.line_chart(ts_short[:, i])
+st.subheader('Cumulative Returns of Short Strategies')
+for i in range(len(rebal)):
+    st.line_chart(ts_short[:, i])
 
-    st.subheader('Top 10 Long and Short Positions for Each Strategy')
-    for strategy, positions in top_positions_summary.items():
-        st.write(f"**Strategy: {strategy}**")
-        st.write("**Top 10 Longs**")
-        st.table(positions['Top Longs'].to_frame('Average Position Size'))
-        st.write("**Top 10 Shorts**")
-        st.table(positions['Top Shorts'].to_frame('Average Position Size'))
-        st.write("\n" + "-"*50)
-else:
-    st.error("Data not available.")
+st.subheader('Top 10 Long and Short Positions for Each Strategy')
+for strategy, positions in top_positions_summary.items():
+    st.write(f"**Strategy: {strategy}**")
+    st.write("**Top 10 Longs**")
+    st.table(positions['Top Longs'].to_frame('Average Position Size'))
+    st.write("**Top 10 Shorts**")
+    st.table(positions['Top Shorts'].to_frame('Average Position Size'))
+    st.write("\n" + "-"*50)
