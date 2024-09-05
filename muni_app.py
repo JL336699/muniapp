@@ -11,6 +11,9 @@ data_path = os.path.join(BASE_DIR, 'static', 'MuniData.xlsx')
 @st.cache_data
 def load_data():
     try:
+        # Check if openpyxl is available
+        import openpyxl  # Try to import openpyxl to check if it's installed
+
         # Try to load data
         data = pd.read_excel(data_path, sheet_name='spreads', header=0, index_col=0)
         returns = pd.read_excel(data_path, sheet_name='totalreturns', header=0, index_col=0)
