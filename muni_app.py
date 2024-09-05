@@ -1,29 +1,36 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-
+import os
 
 # Load data
 @st.cache_data
 def load_data():
-    data = pd.read_excel(r"C:\Users\joseph.lapsley\muni_app\static\MuniData.xlsx", sheet_name='spreads', header=0, index_col=0)
-    returns = pd.read_excel(r"C:\Users\joseph.lapsley\muni_app\static\MuniData.xlsx", sheet_name='totalreturns', header=0, index_col=0)
-    data.index = pd.to_datetime(data.index)
-    return data, returns
+    # Construct the path to the Excel file relative to the script's location
+    data_path = os.path.join(os.path.dirname(__file__), 'static', 'MuniData.xlsx')
+    
 
-data, returns = load_data()
-spreads = data.to_numpy()
 
-# Parameters
-lb = 252
-rebal = [1, 2, 3, 4, 5, 6, 9, 12]
-nb_constituents = 5
-
-# Streamlit app title
-st.title('Muni Rotation Strategy')
+    if os.path.exists(data_path):
+        try:
+            data = pd.read_excel(data_path, sheet_name='spreads', header=0, index_col=0)
+            returns = pd.read_excel(data_path, sheet_name='totalreturns', header=0, index_col=0)
+            data.index = pd.to_datetime(data.index)
+            return data, returns
+        except Exception as e:
+            st.error(f"Error loading data: {e}")
+            return None, None
+    else:
+        st.error("File not found at specified path.")
+        return None, None
 
 # Compute the strategies
-def compute_strategies():
+def compute_strategies(data, returns):
+    if data is None or returns is None:
+        return None, None, {}
+
+    spreads = data.to_numpy()
+    
     ts_long = np.zeros((data.shape[0], len(rebal)))
     ts_short = np.zeros((data.shape[0], len(rebal)))
     top_positions_summary = {}
@@ -87,23 +94,35 @@ def get_top_10_positions(rebal_signal_long, rebal_signal_short, nb_constituents=
     
     return top_longs, top_shorts
 
+# Parameters
+lb = 252
+rebal = [1, 2, 3, 4, 5, 6, 9, 12]
+nb_constituents = 5
+
+# Streamlit app title
+st.title('Muni Rotation Strategy')
+
 # Run the computation
-ts_long, ts_short, top_positions_summary = compute_strategies()
+data, returns = load_data()
+ts_long, ts_short, top_positions_summary = compute_strategies(data, returns)
 
 # Visualize results
-st.subheader('Cumulative Returns of Long Strategies')
-for i in range(len(rebal)):
-    st.line_chart(ts_long[:, i])
+if data is not None and returns is not None:
+    st.subheader('Cumulative Returns of Long Strategies')
+    for i in range(len(rebal)):
+        st.line_chart(ts_long[:, i])
 
-st.subheader('Cumulative Returns of Short Strategies')
-for i in range(len(rebal)):
-    st.line_chart(ts_short[:, i])
+    st.subheader('Cumulative Returns of Short Strategies')
+    for i in range(len(rebal)):
+        st.line_chart(ts_short[:, i])
 
-st.subheader('Top 10 Long and Short Positions for Each Strategy')
-for strategy, positions in top_positions_summary.items():
-    st.write(f"**Strategy: {strategy}**")
-    st.write("**Top 10 Longs**")
-    st.table(positions['Top Longs'].to_frame('Average Position Size'))
-    st.write("**Top 10 Shorts**")
-    st.table(positions['Top Shorts'].to_frame('Average Position Size'))
-    st.write("\n" + "-"*50)
+    st.subheader('Top 10 Long and Short Positions for Each Strategy')
+    for strategy, positions in top_positions_summary.items():
+        st.write(f"**Strategy: {strategy}**")
+        st.write("**Top 10 Longs**")
+        st.table(positions['Top Longs'].to_frame('Average Position Size'))
+        st.write("**Top 10 Shorts**")
+        st.table(positions['Top Shorts'].to_frame('Average Position Size'))
+        st.write("\n" + "-"*50)
+else:
+    st.error("Data not available.")
